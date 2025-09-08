@@ -4,6 +4,9 @@ on:
     push:
         branches:
             - main
+    pull_request:
+        branches: [main]
+        types: [opened, synchronize]
 
 jobs:
     simple_deployment_pipeline:
@@ -17,4 +20,22 @@ jobs:
               run: npm ci
             - name: Run build
               run: npm run build
+    tag_release:
+        if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+        needs: [simple_deployment_pipeline]
+        runs-on: ubuntu-latest
+        permissions: 
+            contents: write
+        steps: 
+            - uses: actions/checkout@v4
+              with:
+                fetch-depth: 0
+            - name: Bump ver up
+              uses: anothrNick/github-tag-action@v1
+              env: 
+                GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+                DEFAULT_BUMP: patch
+                TAG_PREFIX: v
+                RELEASE_BRANCHES: main
+
 
